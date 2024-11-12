@@ -1,0 +1,1 @@
+- With Auto Remove Proxy Version If Proxy Get Error/Not Connected/Other
