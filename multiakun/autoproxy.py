@@ -125,7 +125,7 @@ async def main():
         user_ids = user_file.read().splitlines()
 
     # Fetch proxy list once
-    r = requests.get("https://github.com/monosans/proxy-list/blob/main/proxies/all.txt", stream=True)
+    r = requests.get("https://github.com/monosans/proxy-list/raw/main/proxies/all.txt", stream=True)
     if r.status_code == 200:
         with open('auto_proxies.txt', 'wb') as f:
             for chunk in r:
