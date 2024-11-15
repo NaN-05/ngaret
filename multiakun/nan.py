@@ -152,7 +152,7 @@ async def main():
 
         # Fetch proxies from ProxyScrape API
 
-        r = requests.get("https://github.com/monosans/proxy-list/raw/main/proxies/all.txt","https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=protocolipport&format=text" stream=True)
+        r = requests.get("https://github.com/monosans/proxy-list/raw/main/proxies/all.txt","https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=protocolipport&format=text", stream=True)
 
         if r.status_code == 200:
 
