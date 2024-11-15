@@ -68,8 +68,23 @@ async def connect_to_wss(socks5_proxy, user_id):
                         logger.debug(pong_response)
                         await websocket.send(json.dumps(pong_response))
         except Exception as e:
-            logger.error(e)
-            logger.error(socks5_proxy)
+            # Define the proxy to remove
+            proxy_to_remove = socks5_proxy
+
+            # Open the file in read mode
+            with open('auto_proxies.txt', 'r') as file:
+                # Read all lines from the file
+                lines = file.readlines()
+
+            # Filter out the line that contains the proxy to remove
+            updated_lines = [line for line in lines if line.strip() != proxy_to_remove]
+
+            # Open the file in write mode to overwrite with the filtered content
+            with open('auto_proxies.txt', 'w') as file:
+                # Write the updated lines back to the file
+                file.writelines(updated_lines)
+
+            print(f"Proxy '{proxy_to_remove}' has been removed from the file.")
 
 async def main():
     #find user_id on the site in conlose localStorage.getItem('userId') (if you can't get it, write allow pasting)
