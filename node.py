@@ -77,10 +77,18 @@ async def connect_to_wss(socks5_proxy, user_id):
 async def main():
     #find user_id on the site in conlose localStorage.getItem('userId') (if you can't get it, write allow pasting)
     _user_id = input('Please Enter your user ID: ')
-    with open('local_proxies.txt', 'r') as file:
-            local_proxies = file.read().splitlines()
-    tasks = [asyncio.ensure_future(connect_to_wss(i, _user_id)) for i in local_proxies]
+    #put the proxy in a file in the format socks5://username:password@ip:port or socks5://ip:port
+    r = requests.get("https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=protocolipport&format=text",https://github.com/monosans/proxy-list/raw/main/proxies/all.txt", stream=True)
+    if r.status_code == 200:
+        with open('socks4.txt', 'wb') as f:
+            for chunk in r:
+                f.write(chunk)
+        with open('socks4.txt', 'r') as file:
+                socks5_proxy_list = file.read().splitlines()
+    
+    tasks = [asyncio.ensure_future(connect_to_wss('socks4://'+i, _user_id)) for i in socks5_proxy_list]
     await asyncio.gather(*tasks)
+
 
 if __name__ == '__main__':
     #letsgo
