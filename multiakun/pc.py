@@ -75,7 +75,7 @@ async def main():
             user_ids = file.read().splitlines()
         
         # Fetch proxies from ProxyScrape API
-        r = requests.get("https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=protocolipport&format=text", stream=True)
+        r = requests.get("https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/all.txt","https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=protocolipport&format=text", stream=True)
         if r.status_code == 200:
             with open('auto_proxies.txt', 'wb') as f:
                 for chunk in r:
