@@ -10,11 +10,18 @@ from loguru import logger
 from websockets_proxy import Proxy, proxy_connect
 from fake_useragent import UserAgent
 
+# List to keep track of active proxies
+active_proxies = []
+
 async def connect_to_wss(socks5_proxy, user_id):
     user_agent = UserAgent(os=['windows', 'macos', 'linux'], browsers='chrome')
     random_user_agent = user_agent.random
     device_id = str(uuid.uuid3(uuid.NAMESPACE_DNS, socks5_proxy))
-    logger.info(device_id)
+    logger.info(f"Using proxy: {socks5_proxy}, device_id: {device_id}")
+    
+    # Add the proxy to active proxies list when a connection starts
+    active_proxies.append(socks5_proxy)
+
     while True:
         try:
             await asyncio.sleep(random.randint(1, 10) / 10)
@@ -24,12 +31,15 @@ async def connect_to_wss(socks5_proxy, user_id):
             ssl_context = ssl.create_default_context()
             ssl_context.check_hostname = False
             ssl_context.verify_mode = ssl.CERT_NONE
-            urilist = ["wss://proxy2.wynd.network:4444/","wss://proxy2.wynd.network:4650/"]
+            urilist = ["wss://proxy2.wynd.network:4444/", "wss://proxy2.wynd.network:4650/"]
             uri = random.choice(urilist)
             server_hostname = "proxy2.wynd.network"
             proxy = Proxy.from_url(socks5_proxy)
+
+            # Establish websocket connection
             async with proxy_connect(uri, proxy=proxy, ssl=ssl_context, server_hostname=server_hostname,
                                      extra_headers=custom_headers) as websocket:
+
                 async def send_ping():
                     while True:
                         send_message = json.dumps(
@@ -45,6 +55,7 @@ async def connect_to_wss(socks5_proxy, user_id):
                     response = await websocket.recv()
                     message = json.loads(response)
                     logger.info(message)
+
                     if message.get("action") == "AUTH":
                         auth_response = {
                             "id": message["id"],
@@ -65,24 +76,23 @@ async def connect_to_wss(socks5_proxy, user_id):
                         pong_response = {"id": message["id"], "origin_action": "PONG"}
                         logger.debug(pong_response)
                         await websocket.send(json.dumps(pong_response))
+
+                    else:
+                        # Unexpected message, remove proxy
+                        logger.warning(f"Unexpected message: {message}. Removing proxy {socks5_proxy}")
+                        remove_proxy(socks5_proxy)
+                        break
+
         except Exception as e:
-            # Define the proxy to remove
-            proxy_to_remove = socks5_proxy
+            logger.error(f"Exception with proxy {socks5_proxy}: {e}")
+            remove_proxy(socks5_proxy)
+            break
 
-            # Open the file in read mode
-            with open('auto_proxies.txt', 'r') as file:
-                # Read all lines from the file
-                lines = file.readlines()
-
-            # Filter out the line that contains the proxy to remove
-            updated_lines = [line for line in lines if line.strip() != proxy_to_remove]
-
-            # Open the file in write mode to overwrite with the filtered content
-            with open('auto_proxies.txt', 'w') as file:
-                # Write the updated lines back to the file
-                file.writelines(updated_lines)
-
-            print(f"Proxy '{proxy_to_remove}' has been removed from the file.")
+def remove_proxy(proxy):
+    # Remove the proxy from the list of active proxies
+    if proxy in active_proxies:
+        active_proxies.remove(proxy)
+        logger.info(f"Proxy {proxy} removed from active proxies.")
 
 async def main():
     #find user_id on the site in conlose localStorage.getItem('userId') (if you can't get it, write allow pasting)
